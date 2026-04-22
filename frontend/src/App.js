@@ -23,7 +23,7 @@ function App() {
 
     try {
       const res = await axios.post(
-        "http://127.0.0.1:5000/analyze",
+        "https://resume-analyzer-2-c9vh.onrender.com",
         formData
       );
 
