@@ -9,7 +9,15 @@ app = Flask(__name__)
 CORS(app)
 
 # ----------------------------
-# Extract text
+# Home route (IMPORTANT for Render test)
+# ----------------------------
+@app.route("/")
+def home():
+    return "Backend is running 🚀"
+
+
+# ----------------------------
+# Extract text from file
 # ----------------------------
 def extract_text(file):
     if file.filename.endswith(".pdf"):
@@ -110,17 +118,14 @@ def analyze_resume(resume_text, job_desc):
     matched = list(r_set & j_set)
     missing = list(j_set - r_set)
 
-    # keyword score
+    # scoring
     keyword_score = len(matched) / len(j_set) if j_set else 0
-
-    # 🔥 FINAL IMPROVED SCORING
     final_score = (similarity * 0.4 + keyword_score * 0.6) * 100
 
     # boost for short resumes
     if final_score < 70:
         final_score = final_score * 1.3
 
-    # cap at 100
     final_score = min(final_score, 100)
 
     return {
@@ -131,21 +136,24 @@ def analyze_resume(resume_text, job_desc):
 
 
 # ----------------------------
-# API
+# Analyze route
 # ----------------------------
 @app.route("/analyze", methods=["POST"])
 def analyze():
-    file = request.files["resume"]
-    job_desc = request.form["job"]
+    file = request.files.get("resume")
+    job_desc = request.form.get("job", "")
 
-    text = extract_text(file)
-    result = analyze_resume(text, job_desc)
+    if not file:
+        return jsonify({"error": "No resume uploaded"}), 400
+
+    resume_text = extract_text(file)
+    result = analyze_resume(resume_text, job_desc)
 
     return jsonify(result)
 
 
 # ----------------------------
-# Run
+# Run app
 # ----------------------------
 if __name__ == "__main__":
     app.run(port=5000)
